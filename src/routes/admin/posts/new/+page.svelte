@@ -1,4 +1,79 @@
-<script>
+<script lang="ts">
+    import { categories } from '$lib/data';
+
+    let title = '';
+    let content = '';
+    let status = 'Draft';
+    let visibility = 'Public';
+    let publishDate = '';
+    let selectedCategories = new Set<string>();
+    let tags: string[] = ['#webassembly', '#performance'];
+    let newTag = '';
+    let textArea: HTMLTextAreaElement;
+
+    // Initialize with some mock data
+    selectedCategories.add('software-dev');
+
+    function toggleCategory(slug: string) {
+        if (selectedCategories.has(slug)) {
+            selectedCategories.delete(slug);
+        } else {
+            selectedCategories.add(slug);
+        }
+        selectedCategories = selectedCategories; // trigger reactivity
+    }
+
+    function addTag() {
+        if (newTag.trim() && !tags.includes(newTag.trim())) {
+            let tag = newTag.trim();
+            if (!tag.startsWith('#')) tag = '#' + tag;
+            tags = [...tags, tag];
+            newTag = '';
+        }
+    }
+
+    function removeTag(tag: string) {
+        tags = tags.filter(t => t !== tag);
+    }
+
+    function handleTagKeydown(e: KeyboardEvent) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTag();
+        }
+    }
+
+    async function saveDraft() {
+        // console.log('Saving draft...', { title, content, status, tags, categories: [...selectedCategories] });
+        alert('Draft saved (simulated)! Check console for data.');
+        console.log({ title, content, status, tags, categories: [...selectedCategories] });
+    }
+
+    async function publish() {
+        // console.log('Publishing...', { title, content, status, tags, categories: [...selectedCategories] });
+        alert('Post published (simulated)! Check console for data.');
+        console.log({ title, content, status, tags, categories: [...selectedCategories] });
+    }
+
+    // Basic markdown helper
+    function insertMarkdown(prefix: string, suffix: string = '') {
+        if (!textArea) return;
+        const start = textArea.selectionStart;
+        const end = textArea.selectionEnd;
+        const text = textArea.value;
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        content = before + prefix + selection + suffix + after;
+
+        // Restore focus/selection (approximate)
+        setTimeout(() => {
+            textArea.focus();
+            textArea.selectionStart = start + prefix.length;
+            textArea.selectionEnd = end + prefix.length;
+        }, 0);
+    }
 </script>
 
 <div class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white antialiased min-h-screen flex flex-col overflow-x-hidden">
@@ -54,7 +129,7 @@
                     <span class="material-symbols-outlined text-[18px]">visibility</span>
                     Preview
                 </button>
-                <button class="px-6 h-10 rounded-lg bg-primary hover:bg-blue-600 text-white font-bold text-sm shadow-lg shadow-primary/25 transition-all flex items-center gap-2">
+                <button on:click={saveDraft} class="px-6 h-10 rounded-lg bg-primary hover:bg-blue-600 text-white font-bold text-sm shadow-lg shadow-primary/25 transition-all flex items-center gap-2">
                     <span class="material-symbols-outlined text-[18px]">save</span>
                     Save Draft
                 </button>
@@ -65,30 +140,30 @@
             <div class="lg:col-span-2 flex flex-col gap-6">
                 <!-- Title Input -->
                 <div class="bg-surface-light dark:bg-surface-dark rounded-xl p-1 border border-border-light dark:border-border-dark shadow-sm">
-                    <input class="w-full bg-transparent border-none text-2xl font-bold placeholder:text-text-secondary-light dark:placeholder:text-gray-600 text-gray-900 dark:text-white p-4 focus:ring-0" placeholder="Enter post title..."/>
+                    <input bind:value={title} class="w-full bg-transparent border-none text-2xl font-bold placeholder:text-text-secondary-light dark:placeholder:text-gray-600 text-gray-900 dark:text-white p-4 focus:ring-0" placeholder="Enter post title..."/>
                 </div>
                 <!-- Markdown Editor -->
                 <div class="flex flex-col rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm overflow-hidden h-[600px]">
                     <!-- Toolbar -->
                     <div class="flex flex-wrap items-center gap-1 p-2 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-[#111a22]">
-                        <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Bold">
+                        <button on:click={() => insertMarkdown('**', '**')} class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Bold">
                             <span class="material-symbols-outlined text-[20px]">format_bold</span>
                         </button>
-                        <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Italic">
+                        <button on:click={() => insertMarkdown('*', '*')} class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Italic">
                             <span class="material-symbols-outlined text-[20px]">format_italic</span>
                         </button>
                         <div class="w-px h-5 bg-border-light dark:bg-border-dark mx-1"></div>
-                        <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="H1">
+                        <button on:click={() => insertMarkdown('# ')} class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="H1">
                             <span class="material-symbols-outlined text-[20px]">title</span>
                         </button>
-                        <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Link">
+                        <button on:click={() => insertMarkdown('[', '](url)')} class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Link">
                             <span class="material-symbols-outlined text-[20px]">link</span>
                         </button>
-                        <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Quote">
+                        <button on:click={() => insertMarkdown('> ')} class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Quote">
                             <span class="material-symbols-outlined text-[20px]">format_quote</span>
                         </button>
                         <div class="w-px h-5 bg-border-light dark:bg-border-dark mx-1"></div>
-                        <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Code Block">
+                        <button on:click={() => insertMarkdown('```\n', '\n```')} class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Code Block">
                             <span class="material-symbols-outlined text-[20px]">code</span>
                         </button>
                         <button class="p-2 rounded hover:bg-gray-200 dark:hover:bg-surface-dark text-text-secondary-light dark:text-text-secondary-dark transition-colors" title="Image">
@@ -104,11 +179,11 @@
                         </button>
                     </div>
                     <!-- Text Area -->
-                    <textarea class="flex-1 w-full resize-none border-none bg-surface-light dark:bg-surface-dark p-6 text-base font-mono text-gray-800 dark:text-gray-200 focus:ring-0 leading-relaxed" placeholder="# Start writing your masterpiece..."></textarea>
+                    <textarea bind:this={textArea} bind:value={content} class="flex-1 w-full resize-none border-none bg-surface-light dark:bg-surface-dark p-6 text-base font-mono text-gray-800 dark:text-gray-200 focus:ring-0 leading-relaxed" placeholder="# Start writing your masterpiece..."></textarea>
                     <!-- Status Bar -->
                     <div class="px-4 py-2 border-t border-border-light dark:border-border-dark text-xs text-text-secondary-light dark:text-text-secondary-dark flex justify-between">
-                        <span>Words: 0</span>
-                        <span>Last saved: Just now</span>
+                        <span>Words: {content.trim() === '' ? 0 : content.trim().split(/\s+/).length}</span>
+                        <span>Last saved: Not saved yet</span>
                     </div>
                 </div>
                 <!-- Technical Metadata Section -->
@@ -161,13 +236,13 @@
                     <div class="p-4 border-b border-border-light dark:border-border-dark flex justify-between items-center bg-gray-50 dark:bg-[#111a22]">
                         <h3 class="font-bold text-gray-900 dark:text-white text-sm">Publishing</h3>
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">
-                            Draft
+                            {status}
                         </span>
                     </div>
                     <div class="p-4 space-y-4">
                         <div>
                             <label class="block text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">Status</label>
-                            <select class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm text-gray-900 dark:text-white focus:ring-primary focus:border-primary">
+                            <select bind:value={status} class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm text-gray-900 dark:text-white focus:ring-primary focus:border-primary">
                                 <option>Draft</option>
                                 <option>Review Pending</option>
                                 <option>Published</option>
@@ -175,7 +250,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">Visibility</label>
-                            <select class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm text-gray-900 dark:text-white focus:ring-primary focus:border-primary">
+                            <select bind:value={visibility} class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm text-gray-900 dark:text-white focus:ring-primary focus:border-primary">
                                 <option>Public</option>
                                 <option>Members Only</option>
                                 <option>Private</option>
@@ -183,10 +258,10 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-1">Publish Date</label>
-                            <input class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm text-gray-900 dark:text-white focus:ring-primary focus:border-primary" type="datetime-local"/>
+                            <input bind:value={publishDate} class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm text-gray-900 dark:text-white focus:ring-primary focus:border-primary" type="datetime-local"/>
                         </div>
                         <div class="pt-2">
-                            <button class="w-full h-10 rounded-lg bg-primary hover:bg-blue-600 text-white font-bold text-sm shadow-md transition-colors">
+                            <button on:click={publish} class="w-full h-10 rounded-lg bg-primary hover:bg-blue-600 text-white font-bold text-sm shadow-md transition-colors">
                                 Publish Now
                             </button>
                         </div>
@@ -202,38 +277,36 @@
                         <div>
                             <label class="block text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">Categories</label>
                             <div class="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+                                {#each categories as category}
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input class="rounded border-gray-300 dark:border-gray-600 bg-transparent text-primary focus:ring-primary" type="checkbox"/>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Rust Programming</span>
+                                    <input
+                                        type="checkbox"
+                                        class="rounded border-gray-300 dark:border-gray-600 bg-transparent text-primary focus:ring-primary"
+                                        checked={selectedCategories.has(category.slug)}
+                                        on:change={() => toggleCategory(category.slug)}
+                                    />
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">{category.name}</span>
                                 </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input checked class="rounded border-gray-300 dark:border-gray-600 bg-transparent text-primary focus:ring-primary" type="checkbox"/>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">Web Development</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input class="rounded border-gray-300 dark:border-gray-600 bg-transparent text-primary focus:ring-primary" type="checkbox"/>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">DevOps</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input class="rounded border-gray-300 dark:border-gray-600 bg-transparent text-primary focus:ring-primary" type="checkbox"/>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">SvelteKit</span>
-                                </label>
+                                {/each}
                             </div>
                         </div>
                         <!-- Market Trends Tags -->
                         <div>
                             <label class="block text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">Market Trends / Tags</label>
                             <div class="flex flex-wrap gap-2 mb-2">
+                                {#each tags as tag}
                                 <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-light dark:bg-[#111a22] text-gray-600 dark:text-gray-300 text-xs border border-border-light dark:border-border-dark">
-                                    #webassembly
-                                    <button class="hover:text-red-500"><span class="material-symbols-outlined text-[14px]">close</span></button>
+                                    {tag}
+                                    <button on:click={() => removeTag(tag)} class="hover:text-red-500"><span class="material-symbols-outlined text-[14px]">close</span></button>
                                 </span>
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-surface-light dark:bg-[#111a22] text-gray-600 dark:text-gray-300 text-xs border border-border-light dark:border-border-dark">
-                                    #performance
-                                    <button class="hover:text-red-500"><span class="material-symbols-outlined text-[14px]">close</span></button>
-                                </span>
+                                {/each}
                             </div>
-                            <input class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm py-2 px-3 text-gray-900 dark:text-white focus:ring-primary focus:border-primary placeholder:text-text-secondary-light dark:placeholder:text-gray-600" placeholder="Add a tag..."/>
+                            <input
+                                bind:value={newTag}
+                                on:keydown={handleTagKeydown}
+                                class="w-full rounded-lg border-border-light dark:border-border-dark bg-white dark:bg-[#111a22] text-sm py-2 px-3 text-gray-900 dark:text-white focus:ring-primary focus:border-primary placeholder:text-text-secondary-light dark:placeholder:text-gray-600"
+                                placeholder="Add a tag... (Enter)"
+                            />
                         </div>
                     </div>
                 </div>

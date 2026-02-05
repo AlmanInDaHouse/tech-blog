@@ -1,8 +1,29 @@
-<script>
-    function handleSubmit(e) {
-        e.preventDefault();
-        // Redirect to admin dashboard
-        window.location.href = '/admin/posts/new';
+<script lang="ts">
+    import { goto } from '$app/navigation';
+
+    let username = '';
+    let password = '';
+    let showPassword = false;
+    let error = '';
+    let isLoading = false;
+
+    async function handleLogin() {
+        isLoading = true;
+        error = '';
+
+        // Mock delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        if (username === 'admin' && password === 'admin') {
+            goto('/admin/posts/new');
+        } else {
+            error = 'Invalid credentials. Try admin/admin';
+        }
+        isLoading = false;
+    }
+
+    function togglePasswordVisibility() {
+        showPassword = !showPassword;
     }
 </script>
 
@@ -43,13 +64,19 @@
                         Secure login restricted to whitelisted IPs.
                     </p>
                 </div>
-                <form onsubmit={handleSubmit} class="flex flex-col gap-5 px-4 py-3 w-full">
+                <form on:submit|preventDefault={handleLogin} class="flex flex-col gap-5 px-4 py-3 w-full">
+                    {#if error}
+                        <div class="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg text-center font-medium">
+                            {error}
+                        </div>
+                    {/if}
+
                     <!-- Username Field -->
                     <label class="flex flex-col min-w-40 flex-1">
                         <p class="text-[#111418] dark:text-white text-base font-medium leading-normal pb-2">Username</p>
                         <div class="relative flex items-center">
                             <span class="material-symbols-outlined absolute left-4 text-[#92adc9] z-10">person</span>
-                            <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-[#324d67] bg-white dark:bg-[#192633] focus:border-primary h-14 placeholder:text-gray-400 dark:placeholder:text-[#92adc9] pl-12 pr-4 text-base font-normal leading-normal transition-all" placeholder="Enter admin username" value=""/>
+                            <input bind:value={username} class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-[#324d67] bg-white dark:bg-[#192633] focus:border-primary h-14 placeholder:text-gray-400 dark:placeholder:text-[#92adc9] pl-12 pr-4 text-base font-normal leading-normal transition-all" placeholder="Enter admin username (admin)" required/>
                         </div>
                     </label>
                     <!-- Password Field -->
@@ -60,15 +87,19 @@
                         </div>
                         <div class="flex w-full flex-1 items-stretch rounded-lg relative">
                             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#92adc9] z-10">lock</span>
-                            <input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-[#324d67] bg-white dark:bg-[#192633] focus:border-primary h-14 placeholder:text-gray-400 dark:placeholder:text-[#92adc9] pl-12 pr-12 text-base font-normal leading-normal transition-all" placeholder="Enter secure password" type="password" value=""/>
-                            <div class="absolute right-0 top-0 h-full flex items-center pr-4 cursor-pointer text-[#92adc9] hover:text-white">
-                                <span class="material-symbols-outlined">visibility_off</span>
-                            </div>
+                            <input bind:value={password} class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-[#324d67] bg-white dark:bg-[#192633] focus:border-primary h-14 placeholder:text-gray-400 dark:placeholder:text-[#92adc9] pl-12 pr-12 text-base font-normal leading-normal transition-all" placeholder="Enter secure password (admin)" type={showPassword ? 'text' : 'password'} required/>
+                            <button type="button" on:click={togglePasswordVisibility} class="absolute right-0 top-0 h-full flex items-center pr-4 cursor-pointer text-[#92adc9] hover:text-white">
+                                <span class="material-symbols-outlined">{showPassword ? 'visibility' : 'visibility_off'}</span>
+                            </button>
                         </div>
                     </label>
                     <!-- Submit Button -->
-                    <button class="mt-4 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-600 transition-colors shadow-lg shadow-primary/20">
-                        <span class="truncate">Authenticate</span>
+                    <button disabled={isLoading} class="mt-4 flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-blue-600 transition-colors shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed">
+                        {#if isLoading}
+                            <span class="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                        {:else}
+                            <span class="truncate">Authenticate</span>
+                        {/if}
                     </button>
                     <!-- Security Notice -->
                     <div class="mt-4 flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
